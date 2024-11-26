@@ -32,6 +32,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -63,13 +64,16 @@ public class TESTING extends LinearOpMode {
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
     private IMU imu = null;
+    private DcMotor armMotor = null;
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
-    private Servo   servo;
+    private CRServo servo;
+    private RobotArm arm;
     double position = 0.00, current_time = runtime.time();
 
     @Override
     public void runOpMode() {
+
         RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
         RevHubOrientationOnRobot.UsbFacingDirection usbDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
         RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
@@ -78,32 +82,34 @@ public class TESTING extends LinearOpMode {
         // This sample expects the IMU to be in a REV Hub and named "imu".
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(new IMU.Parameters(orientationOnRobot));
-
+        armMotor = hardwareMap.get(DcMotor.class, "armMotor");
         initAprilTag();
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
+        servo = hardwareMap.get(CRServo.class, "servo");
 
-        // Initialize the hardware variables. Note that the strings used here as parameters
-        // to 'get' must correspond to the names assigned during the robot configuration
-        // step (using the FTC Robot Controller app on the phone).
-        servo = hardwareMap.get(Servo.class, "servo");
+        arm = new RobotArm(armMotor,servo);
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
 
+        arm.initArm();
+
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
         // run until the end of the match (driver presses STOP)
+        // arm.setArmPositionDegrees(180);
         while (opModeIsActive()) {
 
             angles = imu.getRobotYawPitchRollAngles();
 
-            updateServo();
+//            updateServo();
 
             // Show the elapsed game time and wheel power.
+            telemetry.addData("enkoder", arm.armMotor.getCurrentPosition());
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("YPR", "YAW (%.2f) , PITCH (%.2f) , ROLL (%.2f)",
                     angles.getYaw(AngleUnit.DEGREES),
@@ -114,13 +120,14 @@ public class TESTING extends LinearOpMode {
         }
     }
 
-    private void updateServo() {
+   /*
+   private void updateServo() {
             if(runtime.time() - current_time >= 3) {
                 current_time = runtime.time();
                 servo.setPosition(position);
                 position = 1 - position;
             }
-    }
+    }*/
 
     private void initAprilTag() {
 

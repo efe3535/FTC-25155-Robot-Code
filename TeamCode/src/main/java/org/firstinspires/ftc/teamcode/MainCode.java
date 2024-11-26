@@ -64,15 +64,16 @@ public class MainCode extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor leftDrive = null;
     private DcMotor rightDrive = null;
+    private DcMotor armMotor = null;
     private IMU imu = null;
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
     private CRServo servo = null;
-
+    private RobotArm arm = null;
     @Override
     public void runOpMode() {
         RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
-        RevHubOrientationOnRobot.UsbFacingDirection usbDirection = RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD;
+        RevHubOrientationOnRobot.UsbFacingDirection usbDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
         RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
         YawPitchRollAngles angles;
         // Now initialize the IMU with this mounting orientation
@@ -90,12 +91,14 @@ public class MainCode extends LinearOpMode {
         // step (using the FTC Robot Controller app on the phone).
         leftDrive = hardwareMap.get(DcMotor.class, "left_drive");
         rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
+        armMotor = hardwareMap.get(DcMotor.class, "armMotor");
         servo = hardwareMap.get(CRServo.class, "servo");
-        // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
-        // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
-        // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
+
         rightDrive.setDirection(DcMotor.Direction.REVERSE);
         leftDrive.setDirection(DcMotor.Direction.FORWARD);
+
+        arm = new RobotArm(armMotor,servo);
+        arm.initArm();
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();

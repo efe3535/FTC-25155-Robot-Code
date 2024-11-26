@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot; // gyro konumlanmasını ayarlamak için gerekli class
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous; // otonom
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor; // dc motor classı
 import com.qualcomm.robotcore.hardware.IMU; // imu classı (gyro için)
 import com.qualcomm.robotcore.util.ElapsedTime; // geçen zaman ölçümü için gerekli class
@@ -17,9 +18,11 @@ public class FTC_AUTO extends LinearOpMode {
     private DcMotor leftDrive = null; // sol motor
     private DcMotor rightDrive = null; // sağ motor
     private IMU imu = null; // inertial measurement unit robotun dönme açısını ölçmek için kullanılıyor
+    private DcMotor armMotor = null;
+    private CRServo servo = null;
 
     private double          headingError  = 0; // hedef -> 45 heading -> 30 --> hedef - heading = 15 derece
-
+    private double          initial_heading;
     // These variable are declared here (as class members) so they can be updated in various methods,
     // but still be displayed by sendTelemetry()
     private double  targetHeading = 0; // hedef (mesela 45 derece)
@@ -30,6 +33,7 @@ public class FTC_AUTO extends LinearOpMode {
     private int     leftTarget    = 0; // sol tekerin enkoder hedefi
     private int     rightTarget   = 0; // sağ tekerin enkoder hedefi
 
+    private RobotArm arm = null;
 
     // Calculate the COUNTS_PER_INCH for your specific drive train.
     // Go to your motor vendor website to determine your motor's COUNTS_PER_MOTOR_REV
@@ -45,22 +49,21 @@ public class FTC_AUTO extends LinearOpMode {
 
 
     static final double     DRIVE_SPEED             = 1;     // maksimum sürüş hızı
-    static final double     TURN_SPEED              = 0.6;     // maksimum dönüş hızı
+    static final double     TURN_SPEED              = 1;     // maksimum dönüş hızı
     static final double     HEADING_THRESHOLD       = 1.0 ;    // açı hata payı (45 derece hedef ise 44 ve 46 arasındaki açılar kabul edilir)
 
-    static final double     P_TURN_GAIN            = 0.02;     // bu değişken ile dönülmesi gereken açı çarpılır ve dönüş hızı elde edilir
-    static final double     P_DRIVE_GAIN           = 0.03;     // bu değişken ile gidilmesi gereken mesafe (error) çarpılır ve gidiş hızı elde edilir
+    static final double     P_TURN_GAIN            = 0.07;     // bu değişken ile dönülmesi gereken açı çarpılır ve dönüş hızı elde edilir
+    static final double     P_DRIVE_GAIN           = 0.05;     // bu değişken ile gidilmesi gereken mesafe (error) çarpılır ve gidiş hızı elde edilir
 
 
 
     @Override
     public void runOpMode() {
-        RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP; // rev logosu yukarı bakıyor
-        RevHubOrientationOnRobot.UsbFacingDirection usbDirection = RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD; // usb portları geriye bakıyor
+        RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
+        RevHubOrientationOnRobot.UsbFacingDirection usbDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
         RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
         imu = hardwareMap.get(IMU.class, "imu"); // IMU (gyro)
         imu.initialize(new IMU.Parameters(orientationOnRobot)); // gyro'yu başlat
-
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -70,6 +73,8 @@ public class FTC_AUTO extends LinearOpMode {
         // step (using the FTC Robot Controller app on the phone).
         leftDrive = hardwareMap.get(DcMotor.class, "left_drive"); // sol motoru tanımla
         rightDrive = hardwareMap.get(DcMotor.class, "right_drive"); // sağ motoru tanımla
+        armMotor = hardwareMap.get(DcMotor.class, "armMotor");
+        servo = hardwareMap.get(CRServo.class, "servo");
 
         // durdur ve enkoderi sıfırla
         leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -91,24 +96,39 @@ public class FTC_AUTO extends LinearOpMode {
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
         rightDrive.setDirection(DcMotor.Direction.REVERSE);
         leftDrive.setDirection(DcMotor.Direction.FORWARD);
-
         // düz gidiş için bir tarafı ters çeviriyoruz
+
+
+        arm = new RobotArm(armMotor,servo);
+        arm.initArm();
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
-        driveStraight(DRIVE_SPEED, 245,getHeading()); // 245cm düz git
+        driveStraight(DRIVE_SPEED, 105 ,getHeading()-55);
+        turnToHeading(TURN_SPEED, getHeading()-125);
+        /* İLK GÖREV BİTTİ, human player'a dönüş */
+        driveStraight(DRIVE_SPEED, 140 ,getHeading()+75);
+
+
+        telemetry.addData("heading", getHeading());
+        /*driveStraight(DRIVE_SPEED, 245,getHeading()); // 245cm düz git
         turnToHeading( TURN_SPEED, getHeading() - 90.0); // saat yönünde 90 derece dön
         driveStraight(DRIVE_SPEED,190,getHeading()); // 190cm düz git
         turnToHeading( TURN_SPEED, getHeading() - 180.0); // 180 derece saat yönünde dön
         driveStraight(DRIVE_SPEED,190,getHeading()); // 190cm düz git
         turnToHeading( TURN_SPEED, getHeading() + 90.0); // 90 derece saat yönünün tersine dön
-        driveStraight(DRIVE_SPEED,245,getHeading()); // 245cm düz git (başladığı konuma yakın bir yere geri döner)
+        driveStraight(DRIVE_SPEED,245,getHeading()); // 245cm düz git (başladığı konuma yakın bir yere geri döner)*/
         while (opModeIsActive()) {
-
             sendTelemetry(true); // değişkenleri vs. driver stationa gönder
-            // telemetry.update();
+            telemetry.update();
         }
+    }
+
+    public double calculateAngle(double angle) {
+        while (angle > 180)  angle -= 360;
+        while (angle <= -180) angle += 360;
+        return angle;
     }
     // düz (açıyı koruyarak, dış etkenlere karşı dayanıklı) sürüş
     public void driveStraight(double maxDriveSpeed,
