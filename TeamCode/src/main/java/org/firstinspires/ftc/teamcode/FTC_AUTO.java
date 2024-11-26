@@ -125,11 +125,6 @@ public class FTC_AUTO extends LinearOpMode {
         }
     }
 
-    public double calculateAngle(double angle) {
-        while (angle > 180)  angle -= 360;
-        while (angle <= -180) angle += 360;
-        return angle;
-    }
     // düz (açıyı koruyarak, dış etkenlere karşı dayanıklı) sürüş
     public void driveStraight(double maxDriveSpeed,
                               double distance,

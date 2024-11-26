@@ -41,8 +41,6 @@ import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 
 /*
@@ -66,8 +64,6 @@ public class MainCode extends LinearOpMode {
     private DcMotor rightDrive = null;
     private DcMotor armMotor = null;
     private IMU imu = null;
-    private AprilTagProcessor aprilTag;
-    private VisionPortal visionPortal;
     private CRServo servo = null;
     private RobotArm arm = null;
     @Override
@@ -81,7 +77,6 @@ public class MainCode extends LinearOpMode {
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(new IMU.Parameters(orientationOnRobot));
 
-        initAprilTag();
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -151,14 +146,4 @@ public class MainCode extends LinearOpMode {
         }
     }
 
-    private void initAprilTag() {
-
-        // Create the AprilTag processor the easy way.
-        aprilTag = AprilTagProcessor.easyCreateWithDefaults();
-
-        // Create the vision portal the easy way.
-        visionPortal = VisionPortal.easyCreateWithDefaults(
-                hardwareMap.get(WebcamName.class, "Webcam 1"), aprilTag);
-
-    }   // end
 }
