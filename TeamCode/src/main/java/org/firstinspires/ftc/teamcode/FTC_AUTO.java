@@ -195,40 +195,39 @@ public class FTC_AUTO extends LinearOpMode {
     // açıya dönüş için robotu hareket ettir.
     public void turnToHeading(double maxTurnSpeed, double heading) {
 
-        // Run getSteeringCorrection() once to pre-calculate the current error
+        // açı sapmasını hesapla
         getSteeringCorrection(heading, P_DRIVE_GAIN);
 
-        // keep looping while we are still active, and not on heading.
+        // istenen açıda olmadığımız sürece bu döngü çalışır
         while (opModeIsActive() && (Math.abs(headingError) > HEADING_THRESHOLD)) {
 
-            // Determine required steering to keep on heading
+            // açıyı tutturmak için gerekli motor hızı
             turnSpeed = getSteeringCorrection(heading, P_TURN_GAIN);
 
-            // Clip the speed to the maximum permitted value.
+            // motor hızını kabul edilebilir aralıkta tut (en az -1, en fazla 1)
             turnSpeed = Range.clip(turnSpeed, -maxTurnSpeed, maxTurnSpeed);
 
-            // Pivot in place by applying the turning correction
+            // kendi etrafinda istenen aciya don
             moveRobot(0, turnSpeed);
 
-            // Display drive status for the driver.
         }
-
-        // Stop all motion;
+        // işimiz bitince dur.
         moveRobot(0, 0);
     }
 
     // istenen açıya dönüş için gereken motor hızlarını hesapla
     public double getSteeringCorrection(double desiredHeading, double proportionalGain) {
-        targetHeading = desiredHeading;  // Save for telemetry
+        targetHeading = desiredHeading;  // robot verisi için değişkeni kaydet
 
-        // Determine the heading current error
+        // açı sapmasını hesapla
         headingError = targetHeading - getHeading();
 
-        // Normalize the error to be within +/- 180 degrees
+        // açı sapmasını -180 ve 180 derece arasında tut
         while (headingError > 180)  headingError -= 360;
         while (headingError <= -180) headingError += 360;
 
-        // Multiply the error by the gain to determine the required steering correction/  Limit the result to +/- 1.0
+        // dönüş hızlarını hesaplamak için açı sapması ile önceden ayarlanmış değeri çarp, bu değeri -1 ve 1
+        // arasına limitle.
         return Range.clip(headingError * proportionalGain, -1, 1);
     }
 
