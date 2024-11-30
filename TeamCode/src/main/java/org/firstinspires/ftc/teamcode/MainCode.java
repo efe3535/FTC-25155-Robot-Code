@@ -66,6 +66,11 @@ public class MainCode extends LinearOpMode {
     private IMU imu = null;
     private CRServo servo = null;
     private RobotArm arm = null;
+    private  double TURN_SLOW = 0.3;
+    private double TURN_MOD = TURN_SLOW;
+    private int[] degreeArray = {0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200,210,220,230,240,250,260,270,280};
+    private int degreeIndex = 0;
+
     @Override
     public void runOpMode() {
         RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
@@ -88,7 +93,10 @@ public class MainCode extends LinearOpMode {
         rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
         armMotor = hardwareMap.get(DcMotor.class, "armMotor");
         servo = hardwareMap.get(CRServo.class, "servo");
-
+        leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightDrive.setDirection(DcMotor.Direction.REVERSE);
         leftDrive.setDirection(DcMotor.Direction.FORWARD);
 
@@ -101,16 +109,18 @@ public class MainCode extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-
             double leftPower;
             double rightPower;
             double drive = -gamepad1.left_stick_y;
-            double turn = gamepad1.right_stick_x;
+            double turn = gamepad1.right_stick_x * TURN_MOD;
             leftPower = Range.clip(drive + turn, -1.0, 1.0);
             rightPower = Range.clip(drive - turn, -1.0, 1.0);
             angles = imu.getRobotYawPitchRollAngles();
             leftDrive.setPower(leftPower);
             rightDrive.setPower(rightPower);
+
+            handleArm();
+            handleTurnSpeed();
             handleServo();
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
@@ -123,14 +133,36 @@ public class MainCode extends LinearOpMode {
         }
     }
 
+    private void handleArm() {
+        if(!armMotor.isBusy()) {
+            if(gamepad2.dpad_up && degreeIndex < degreeArray.length-1) {
+                degreeIndex++;
+            } else if(gamepad2.dpad_down && degreeIndex > 0) {
+                degreeIndex--;
+            }
+
+            if(degreeIndex > degreeArray.length-1) {
+                degreeIndex = 0;
+            }
+            arm.setArmPositionDegrees(degreeArray[degreeIndex]);
+        }
+    }
+
+    private void handleTurnSpeed() {
+        if(gamepad1.left_bumper) {
+            TURN_MOD = 1;
+        } else {
+            TURN_MOD = TURN_SLOW;
+        }
+    }
+
     private void handleServo() {
-        if(gamepad1.a) {
+        if(gamepad2.a) {
             servo.setPower(-1);
-        } else if(gamepad1.y) {
+        } else if(gamepad2.y) {
             servo.setPower(1);
         } else {
             servo.setPower(0);
         }
     }
-
 }

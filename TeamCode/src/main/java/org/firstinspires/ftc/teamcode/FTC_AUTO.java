@@ -49,7 +49,7 @@ public class FTC_AUTO extends LinearOpMode {
 
 
     static final double     DRIVE_SPEED             = 1;     // maksimum sürüş hızı
-    static final double     TURN_SPEED              = 1;     // maksimum dönüş hızı
+    static final double     TURN_SPEED              = 0.7;     // maksimum dönüş hızı
     static final double     HEADING_THRESHOLD       = 1.0 ;    // açı hata payı (45 derece hedef ise 44 ve 46 arasındaki açılar kabul edilir)
 
     static final double     P_TURN_GAIN            = 0.07;     // bu değişken ile dönülmesi gereken açı çarpılır ve dönüş hızı elde edilir
@@ -98,20 +98,23 @@ public class FTC_AUTO extends LinearOpMode {
         leftDrive.setDirection(DcMotor.Direction.FORWARD);
         // düz gidiş için bir tarafı ters çeviriyoruz
 
-
         arm = new RobotArm(armMotor,servo);
         arm.initArm();
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
-        driveStraight(DRIVE_SPEED, 105 ,getHeading()-55);
-        turnToHeading(TURN_SPEED, getHeading()-125);
-        /* İLK GÖREV BİTTİ, human player'a dönüş */
-        driveStraight(DRIVE_SPEED, 140 ,getHeading()+75);
+        // TODO GETHEADING'I BOSVER NORMAL DERECE YAZ.
+        driveStraight(DRIVE_SPEED, 63, getHeading());
+        turnToHeading( TURN_SPEED, getHeading() - 180);
+        arm.setArmPositionDegrees(165);
+        arm.waitArm();
+        driveStraight(DRIVE_SPEED, 5 ,getHeading());
+        driveStraight(DRIVE_SPEED, 30 ,getHeading());
+        turnToHeading( TURN_SPEED, getHeading() - 110);
+        arm.setArmPositionDegrees(0);
+        arm.waitArm();
 
-
-        telemetry.addData("heading", getHeading());
         /*driveStraight(DRIVE_SPEED, 245,getHeading()); // 245cm düz git
         turnToHeading( TURN_SPEED, getHeading() - 90.0); // saat yönünde 90 derece dön
         driveStraight(DRIVE_SPEED,190,getHeading()); // 190cm düz git
@@ -119,6 +122,8 @@ public class FTC_AUTO extends LinearOpMode {
         driveStraight(DRIVE_SPEED,190,getHeading()); // 190cm düz git
         turnToHeading( TURN_SPEED, getHeading() + 90.0); // 90 derece saat yönünün tersine dön
         driveStraight(DRIVE_SPEED,245,getHeading()); // 245cm düz git (başladığı konuma yakın bir yere geri döner)*/
+        telemetry.addData("heading", getHeading());
+
         while (opModeIsActive()) {
             sendTelemetry(true); // değişkenleri vs. driver stationa gönder
             telemetry.update();
