@@ -42,7 +42,7 @@ public class FTC_AUTO extends LinearOpMode {
     // This is gearing DOWN for less speed and more torque.
     // For gearing UP, use a gear ratio less than 1.0. Note this will affect the direction of wheel rotation.
     static final double     COUNTS_PER_MOTOR_REV    = 28 ;   // rev motorun 1 tur dönüşte enkoder sayımı
-    static final double     DRIVE_GEAR_REDUCTION    = 60.0 ;     // 3*4*5 = 60 dişli oranı
+    static final double     DRIVE_GEAR_REDUCTION    = 20.0 ;     // 3*4*5 = 60 dişli oranı
     static final double     WHEEL_DIAMETER_CENTIMETER   = 4.0 * 2.54;     // santimetre cinsinden teker çapı
     static final double     COUNTS_PER_CENTIMETER         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_CENTIMETER * 3.1415); // 1 cm'ye düşen enkoder  count sayısı
@@ -55,7 +55,7 @@ public class FTC_AUTO extends LinearOpMode {
     static final double     P_TURN_GAIN            = 0.07;     // bu değişken ile dönülmesi gereken açı çarpılır ve dönüş hızı elde edilir
     static final double     P_DRIVE_GAIN           = 0.05;     // bu değişken ile gidilmesi gereken mesafe (error) çarpılır ve gidiş hızı elde edilir
 
-
+    double current_time;
 
     @Override
     public void runOpMode() {
@@ -105,23 +105,34 @@ public class FTC_AUTO extends LinearOpMode {
         waitForStart();
         runtime.reset();
         // TODO GETHEADING'I BOSVER NORMAL DERECE YAZ.
-        driveStraight(DRIVE_SPEED, 63, getHeading());
+        /*
+        driveStraight(DRIVE_SPEED, 64, getHeading());
         turnToHeading( TURN_SPEED, getHeading() - 180);
         arm.setArmPositionDegrees(165);
         arm.waitArm();
         driveStraight(DRIVE_SPEED, 5 ,getHeading());
         driveStraight(DRIVE_SPEED, 30 ,getHeading());
-        turnToHeading( TURN_SPEED, getHeading() - 110);
+        turnToHeading( TURN_SPEED, getHeading() - 90);
         arm.setArmPositionDegrees(0);
         arm.waitArm();
+*/
 
-        /*driveStraight(DRIVE_SPEED, 245,getHeading()); // 245cm düz git
-        turnToHeading( TURN_SPEED, getHeading() - 90.0); // saat yönünde 90 derece dön
-        driveStraight(DRIVE_SPEED,190,getHeading()); // 190cm düz git
-        turnToHeading( TURN_SPEED, getHeading() - 180.0); // 180 derece saat yönünde dön
-        driveStraight(DRIVE_SPEED,190,getHeading()); // 190cm düz git
-        turnToHeading( TURN_SPEED, getHeading() + 90.0); // 90 derece saat yönünün tersine dön
-        driveStraight(DRIVE_SPEED,245,getHeading()); // 245cm düz git (başladığı konuma yakın bir yere geri döner)*/
+
+
+        //driveStraight(DRIVE_SPEED, 64, getHeading());
+        encoderDrive(DRIVE_SPEED,  -64,  -64, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
+
+        //turnToHeading( TURN_SPEED, getHeading() - 180);
+        arm.setArmPositionDegrees(175 );
+        arm.waitArm();
+        driveStraight(DRIVE_SPEED, 5 ,getHeading());
+        driveStraight(DRIVE_SPEED, 30 ,getHeading());
+        turnToHeading( TURN_SPEED, getHeading() + 75);
+        arm.setArmPositionDegrees(0);
+        arm.waitArm();
+        driveStraight(DRIVE_SPEED, 105 ,getHeading());
+
+
         telemetry.addData("heading", getHeading());
 
         while (opModeIsActive()) {
@@ -177,6 +188,59 @@ public class FTC_AUTO extends LinearOpMode {
             moveRobot(0, 0);
             leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
+    }
+
+    public void encoderDrive(double speed,
+                             double leftInches, double rightInches,
+                             double timeoutS) {
+        int newLeftTarget;
+        int newRightTarget;
+
+        // Ensure that the OpMode is still active
+        if (opModeIsActive()) {
+
+            // Determine new target position, and pass to motor controller
+            newLeftTarget = leftDrive.getCurrentPosition() + (int)(leftInches * COUNTS_PER_CENTIMETER);
+            newRightTarget = rightDrive.getCurrentPosition() + (int)(rightInches * COUNTS_PER_CENTIMETER);
+            leftDrive.setTargetPosition(newLeftTarget);
+            rightDrive.setTargetPosition(newRightTarget);
+
+            // Turn On RUN_TO_POSITION
+            leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            // reset the timeout time and start motion.
+            runtime.reset();
+            leftDrive.setPower(Math.abs(speed));
+            rightDrive.setPower(Math.abs(speed));
+
+            // keep looping while we are still active, and there is time left, and both motors are running.
+            // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
+            // its target position, the motion will stop.  This is "safer" in the event that the robot will
+            // always end the motion as soon as possible.
+            // However, if you require that BOTH motors have finished their moves before the robot continues
+            // onto the next step, use (isBusy() || isBusy()) in the loop test.
+            while (opModeIsActive() &&
+                    (runtime.seconds() < timeoutS) &&
+                    (leftDrive.isBusy() && rightDrive.isBusy())) {
+
+                // Display it for the driver.
+                telemetry.addData("Running to",  " %7d :%7d", newLeftTarget,  newRightTarget);
+                telemetry.addData("Currently at",  " at %7d :%7d",
+                        leftDrive.getCurrentPosition(), rightDrive.getCurrentPosition());
+                telemetry.update();
+            }
+
+            // Stop all motion;
+            leftDrive.setPower(0);
+            rightDrive.setPower(0);
+
+            // Turn off RUN_TO_POSITION
+            leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            sleep(250);   // optional pause after each move.
         }
     }
 
