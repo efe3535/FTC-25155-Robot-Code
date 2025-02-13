@@ -118,7 +118,7 @@ public class MainCode extends LinearOpMode {
             angles = imu.getRobotYawPitchRollAngles();
             leftDrive.setPower(leftPower);
             rightDrive.setPower(rightPower);
-
+            servoPosition = servo.getPosition();
             handleArm();
             handleTurnSpeed();
             handleServo();
