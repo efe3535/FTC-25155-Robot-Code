@@ -67,7 +67,7 @@ public class TESTING extends LinearOpMode {
     private DcMotor armMotor = null;
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
-    private CRServo servo;
+    private Servo servo;
     private RobotArm arm;
     double position = 0.00, current_time = runtime.time();
 
@@ -87,7 +87,7 @@ public class TESTING extends LinearOpMode {
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
-        servo = hardwareMap.get(CRServo.class, "servo");
+        servo = hardwareMap.get(Servo.class, "servo");
 
         arm = new RobotArm(armMotor,servo);
 

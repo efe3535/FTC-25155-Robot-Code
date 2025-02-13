@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot; // gyro konumlanmasını ayarlamak için gerekli class
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous; // otonom
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DcMotor; // dc motor classı
 import com.qualcomm.robotcore.hardware.IMU; // imu classı (gyro için)
 import com.qualcomm.robotcore.util.ElapsedTime; // geçen zaman ölçümü için gerekli class
@@ -19,7 +19,7 @@ public class FTC_AUTO extends LinearOpMode {
     private DcMotor rightDrive = null; // sağ motor
     private IMU imu = null; // inertial measurement unit robotun dönme açısını ölçmek için kullanılıyor
     private DcMotor armMotor = null;
-    private CRServo servo = null;
+    private Servo servo = null;
 
     private double          headingError  = 0; // hedef -> 45 heading -> 30 --> hedef - heading = 15 derece
     private double          initial_heading;
@@ -74,7 +74,7 @@ public class FTC_AUTO extends LinearOpMode {
         leftDrive = hardwareMap.get(DcMotor.class, "left_drive"); // sol motoru tanımla
         rightDrive = hardwareMap.get(DcMotor.class, "right_drive"); // sağ motoru tanımla
         armMotor = hardwareMap.get(DcMotor.class, "armMotor");
-        servo = hardwareMap.get(CRServo.class, "servo");
+        servo = hardwareMap.get(Servo.class, "servo");
 
         // durdur ve enkoderi sıfırla
         leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);

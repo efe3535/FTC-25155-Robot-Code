@@ -32,13 +32,11 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
-
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
@@ -64,11 +62,13 @@ public class MainCode extends LinearOpMode {
     private DcMotor rightDrive = null;
     private DcMotor armMotor = null;
     private IMU imu = null;
-    private CRServo servo = null;
+    private Servo servo = null;
     private RobotArm arm = null;
-    private  double TURN_SLOW = 0.3;
+    private final double SERVO_STEP = 0.05;
+    private double servoPosition = 0.0;
+    private double TURN_SLOW = 0.3;
     private double TURN_MOD = TURN_SLOW;
-    private int[] degreeArray = {0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200,210,220,230,240,250,260,270,280};
+    private int[] degreeArray = {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280};
     private int degreeIndex = 0;
 
     @Override
@@ -92,7 +92,7 @@ public class MainCode extends LinearOpMode {
         leftDrive = hardwareMap.get(DcMotor.class, "left_drive");
         rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
         armMotor = hardwareMap.get(DcMotor.class, "armMotor");
-        servo = hardwareMap.get(CRServo.class, "servo");
+        servo = hardwareMap.get(Servo.class, "servo");
         leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -100,7 +100,7 @@ public class MainCode extends LinearOpMode {
         rightDrive.setDirection(DcMotor.Direction.REVERSE);
         leftDrive.setDirection(DcMotor.Direction.FORWARD);
 
-        arm = new RobotArm(armMotor,servo);
+        arm = new RobotArm(armMotor, servo);
         arm.initArm();
 
         // Wait for the game to start (driver presses PLAY)
@@ -134,14 +134,14 @@ public class MainCode extends LinearOpMode {
     }
 
     private void handleArm() {
-        if(!armMotor.isBusy()) {
-            if(gamepad2.dpad_up && degreeIndex < degreeArray.length-1) {
+        if (!armMotor.isBusy()) {
+            if (gamepad2.dpad_up && degreeIndex < degreeArray.length - 1) {
                 degreeIndex++;
-            } else if(gamepad2.dpad_down && degreeIndex > 0) {
+            } else if (gamepad2.dpad_down && degreeIndex > 0) {
                 degreeIndex--;
             }
 
-            if(degreeIndex > degreeArray.length-1) {
+            if (degreeIndex > degreeArray.length - 1) {
                 degreeIndex = 0;
             }
             arm.setArmPositionDegrees(degreeArray[degreeIndex]);
@@ -149,7 +149,7 @@ public class MainCode extends LinearOpMode {
     }
 
     private void handleTurnSpeed() {
-        if(gamepad1.left_bumper) {
+        if (gamepad1.left_bumper) {
             TURN_MOD = 1;
         } else {
             TURN_MOD = TURN_SLOW;
@@ -157,12 +157,19 @@ public class MainCode extends LinearOpMode {
     }
 
     private void handleServo() {
-        if(gamepad2.a) {
-            servo.setPower(-1);
-        } else if(gamepad2.y) {
-            servo.setPower(1);
-        } else {
-            servo.setPower(0);
+        if (gamepad2.a) {
+            if (servoPosition <= 1.0 - SERVO_STEP) {
+                servoPosition += SERVO_STEP;
+            }
+            servo.setPosition(servoPosition);
+            sleep(50);
+
+        } else if (gamepad2.y) {
+            if (servoPosition >= SERVO_STEP) {
+                servoPosition -= SERVO_STEP;
+            }
+            servo.setPosition(servoPosition);
+            sleep(50);
         }
     }
 }

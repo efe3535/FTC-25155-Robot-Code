@@ -1,18 +1,18 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 public class RobotArm {
     public DcMotor armMotor;
-    public CRServo servoMotor;
+    public Servo servoMotor;
     private final double     COUNTS_PER_MOTOR_REV    = 28 ;   // rev motorun 1 tur dönüşte enkoder sayımı
     private final double     DRIVE_GEAR_REDUCTION    = 125.0 ;     // 5*5*5 = 125 dişli oranı
     private final double     COUNTS_PER_DEGREE       = (COUNTS_PER_MOTOR_REV*DRIVE_GEAR_REDUCTION) / 360 ;
     // 1 tur -> 1680 count
     // 1 derece -> 1680/360 ~= 4.66
 
-    RobotArm(DcMotor armMotor, CRServo servoMotor) {
+    RobotArm(DcMotor armMotor, Servo servoMotor) {
         this.armMotor = armMotor;
         this.servoMotor = servoMotor;
     }
